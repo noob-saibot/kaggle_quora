@@ -16,6 +16,7 @@ import nltk
 from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import matplotlib
+import difflib
 matplotlib.style.use('ggplot')
 
 
@@ -50,7 +51,7 @@ def go():
 
     E = Extractor(work_dir='./',
                   file_train='data/train.csv')
-    frame = E.df_creation()
+    frame = pandas.read_csv('data/result_frame.csv', encoding='cp1252')
 
     # from ngram import NGram
     # import pylev
@@ -149,18 +150,151 @@ def go():
     #frame[['id', 'is_duplicate', 'comp', 'dist', 'rake', 'rake_my', 'tfidf']].plot.bar(x='id')
     #plt.show()
 
+    ## Additional part from kaggle 0.33
 
-    print('   Rake:', roc_auc_score(frame['is_duplicate'], frame['rake'].fillna(0)))
-    print('  Tfidf:', roc_auc_score(frame['is_duplicate'], frame['tfidf'].fillna(0)))
-    print('   Dist:', roc_auc_score(frame['is_duplicate'], frame['dist'].fillna(0)))
-    print('Rake_my:', roc_auc_score(frame['is_duplicate'], frame['rake_my'].fillna(0)))
-    print('   Comp:', roc_auc_score(frame['is_duplicate'], frame['comp'].fillna(0)))
-    regr = CustomEnsembleRegressor([en.GradientBoostingClassifier()])
-    # print(Learning(frame.drop(['id', 'qid1', 'qid2', 'question1', 'question2', 'rake_my'], axis=1), y_col='is_duplicate').
-    #       trees(m_params={#'verbose': True,
-    #                       'classificators': [en.GradientBoostingClassifier(n_estimators=10)]
-    #                       #'criterion': 'mse'
-    #                      }, models=CustomEnsembleRegressor))
+    # stops = set(stopwords.words("english"))
+    # def get_unigrams(que):
+    #     return [word for word in nltk.word_tokenize(que.lower()) if word not in stops]
+    #
+    # def get_common_unigrams(row):
+    #     return len(set(row["unigrams_ques1"]).intersection(set(row["unigrams_ques2"])))
+    #
+    # def get_common_unigram_ratio(row):
+    #     return float(row["zunigrams_common_count"]) / max(
+    #         len(set(row["unigrams_ques1"]).union(set(row["unigrams_ques2"]))), 1)
+    #
+    # def get_bigrams(que):
+    #     return [i for i in nltk.ngrams(que, 2)]
+    #
+    # def get_common_bigrams(row):
+    #     return len(set(row["bigrams_ques1"]).intersection(set(row["bigrams_ques2"])))
+    #
+    # def get_common_bigram_ratio(row):
+    #     return float(row["zbigrams_common_count"]) / max(
+    #         len(set(row["bigrams_ques1"]).union(set(row["bigrams_ques2"]))), 1)
+    #
+    # frame['question1_nouns'] = frame.question1.map(
+    #     lambda x: [w for w, t in nltk.pos_tag(nltk.word_tokenize(str(x).lower())) if t[:1] in ['N']])
+    # frame['question2_nouns'] = frame.question2.map(
+    #     lambda x: [w for w, t in nltk.pos_tag(nltk.word_tokenize(str(x).lower())) if t[:1] in ['N']])
+    #
+    # frame['z_len1'] = frame.question1.map(lambda x: len(str(x)))
+    # frame['z_len2'] = frame.question2.map(lambda x: len(str(x)))
+    # frame['z_word_len1'] = frame.question1.map(lambda x: len(str(x).split()))
+    # frame['z_word_len2'] = frame.question2.map(lambda x: len(str(x).split()))
+    # frame['z_noun_match'] = frame.apply(lambda r: sum([1 for w in r.question1_nouns if w in r.question2_nouns]), axis=1)
+    #
+    # frame["unigrams_ques1"] = frame['question1'].apply(lambda x: get_unigrams(str(x)))
+    # frame["unigrams_ques2"] = frame['question2'].apply(lambda x: get_unigrams(str(x)))
+    # frame["zunigrams_common_count"] = frame.apply(lambda r: get_common_unigrams(r), axis=1)
+    # frame["zunigrams_common_ratio"] = frame.apply(lambda r: get_common_unigram_ratio(r), axis=1)
+    # frame["bigrams_ques1"] = frame["unigrams_ques1"].apply(lambda x: get_bigrams(x))
+    # frame["bigrams_ques2"] = frame["unigrams_ques2"].apply(lambda x: get_bigrams(x))
+    # frame["zbigrams_common_count"] = frame.apply(lambda r: get_common_bigrams(r), axis=1)
+    # frame["zbigrams_common_ratio"] = frame.apply(lambda r: get_common_bigram_ratio(r), axis=1)
+    #
+    #
+    #
+    #
+    #
+    #
+    # def diff_ratios(s):
+    #     seq = difflib.SequenceMatcher()
+    #     seq.set_seqs(str(s['question1']).lower(), str(s['question2']).lower())
+    #     return seq.ratio()
+    #
+    # frame['diff'] = frame[['question1', 'question2']].apply(diff_ratios, axis=1)
+
+    #E.saver(frame, 'train_res_uni_zen.csv')
+
+    print('                  Rake:', roc_auc_score(frame['is_duplicate'], frame['rake'].fillna(0)))
+    print('                 Tfidf:', roc_auc_score(frame['is_duplicate'], frame['tfidf'].fillna(0)))
+    print('                  Dist:', roc_auc_score(frame['is_duplicate'], frame['dist'].fillna(0)))
+    print('               Rake_my:', roc_auc_score(frame['is_duplicate'], frame['rake_my'].fillna(0)))
+    print('                  Comp:', roc_auc_score(frame['is_duplicate'], frame['comp'].fillna(0)))
+    print('                  Diff:', roc_auc_score(frame['is_duplicate'], frame['diff'].fillna(0)))
+
+
+    print('zunigrams_common_ratio:', roc_auc_score(frame['is_duplicate'], frame['zunigrams_common_ratio'].fillna(0)))
+    print(' zbigrams_common_ratio:', roc_auc_score(frame['is_duplicate'], frame['zbigrams_common_ratio'].fillna(0)))
+    print('zunigrams_common_count:', roc_auc_score(frame['is_duplicate'], frame['zunigrams_common_count'].fillna(0)))
+    print(' zbigrams_common_count:', roc_auc_score(frame['is_duplicate'], frame['zbigrams_common_count'].fillna(0)))
+
+    # print('z_len1:', roc_auc_score(frame['is_duplicate'], frame['z_len1'].fillna(0)))
+    # print('z_len2:', roc_auc_score(frame['is_duplicate'], frame['z_len2'].fillna(0)))
+    # print('z_word_len1:', roc_auc_score(frame['is_duplicate'], frame['z_word_len1'].fillna(0)))
+    # print('z_word_len2:', roc_auc_score(frame['is_duplicate'], frame['z_word_len2'].fillna(0)))
+    # print('z_noun_match:', roc_auc_score(frame['is_duplicate'], frame['z_noun_match'].fillna(0)))
+    # print('unigrams_ques1:', roc_auc_score(frame['is_duplicate'], frame['unigrams_ques1'].fillna(0)))
+    # print('unigrams_ques2:', roc_auc_score(frame['is_duplicate'], frame['unigrams_ques2'].fillna(0)))
+    # print('bigrams_ques1:', roc_auc_score(frame['is_duplicate'], frame['bigrams_ques1'].fillna(0)))
+    # print('bigrams_ques2:', roc_auc_score(frame['is_duplicate'], frame['bigrams_ques2'].fillna(0)))
+    # #regr = CustomEnsembleRegressor([en.GradientBoostingClassifier()])
+
+    x_train = pandas.DataFrame()
+    x_test = pandas.DataFrame()
+    x_train['rake'] = frame['rake']
+    x_train['tfidf'] = frame['tfidf']
+    x_train['dist'] = frame['dist']
+    x_train['comp'] = frame['comp']
+    x_train['diff'] = frame['diff']
+
+    x_train['zunigrams_common_ratio'] = frame['zunigrams_common_ratio']
+    x_train['zbigrams_common_ratio'] = frame['zbigrams_common_ratio']
+    x_train['zunigrams_common_count'] = frame['zunigrams_common_count']
+    x_train['zbigrams_common_count'] = frame['zbigrams_common_count']
+
+    # x_train['z_len1'] = frame['z_len1']
+    # x_train['z_len2'] = frame['z_len2']
+    # x_train['z_word_len1'] = frame['z_word_len1']
+    # x_train['z_word_len2'] = frame['z_word_len2']
+    # x_train['unigrams_ques1'] = frame['unigrams_ques1']
+    # x_train['unigrams_ques2'] = frame['unigrams_ques2']
+    # x_train['bigrams_ques1'] = frame['bigrams_ques1']
+    # x_train['bigrams_ques2'] = frame['bigrams_ques2']
+    # x_train['z_noun_match'] = frame['z_noun_match']
+
+    # x_test['word_match'] = frame_test.apply(word_match_share, axis=1, raw=True)
+    # x_test['tfidf_word_match'] = frame_test.apply(tfidf_word_match_share, axis=1, raw=True)
+
+    y_train = frame['is_duplicate'].values
+
+    pos_train = x_train[y_train == 1]
+    neg_train = x_train[y_train == 0]
+
+    # Now we oversample the negative class
+    # There is likely a much more elegant way to do this...
+    # p = 0.2
+    # scale = ((len(pos_train) / (len(pos_train) + len(neg_train))) / p) - 1
+    # while scale > 1:
+    #     neg_train = pandas.concat([neg_train, neg_train])
+    #     scale -= 1
+    # neg_train = pandas.concat([neg_train, neg_train[:int(scale * len(neg_train))]])
+    # print(len(pos_train) / (len(pos_train) + len(neg_train)))
+
+    x_train = pandas.concat([pos_train, neg_train])
+    y_train = (np.zeros(len(pos_train)) + 1).tolist() + np.zeros(len(neg_train)).tolist()
+    del pos_train, neg_train
+
+    #x_train, x_valid, y_train, y_valid = train_test_split(x_train, y_train, test_size=0.2, random_state=4242)
+
+    x_train['is_duplicate'] = y_train
+    print(Learning(x_train[['comp',
+                            'rake',
+                            'dist',
+                            'diff',
+                            'tfidf',
+                            'zbigrams_common_count',
+                            'zunigrams_common_count',
+                            'zbigrams_common_ratio',
+                            'zunigrams_common_ratio',
+                            'is_duplicate']], y_col='is_duplicate').trees(m_params={
+        'verbose': True,
+        'criterion': 'mse',
+        'n_estimators': 2500,
+        'learning_rate': 0.07
+    },
+        models=en.GradientBoostingClassifier))
 
 if __name__ == '__main__':
     go()
