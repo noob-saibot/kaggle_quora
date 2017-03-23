@@ -17,6 +17,10 @@ from sklearn.metrics import roc_auc_score
 import matplotlib.pyplot as plt
 import matplotlib
 import difflib
+from math import *
+from decimal import Decimal
+from collections import Counter
+from sklearn.feature_extraction import DictVectorizer
 matplotlib.style.use('ggplot')
 
 
@@ -51,7 +55,85 @@ def go():
 
     E = Extractor(work_dir='./',
                   file_train='data/train.csv')
-    frame = pandas.read_csv('data/result_frame.csv', encoding='cp1252')
+    frame = pandas.read_csv('all_and_my_mutalist.csv', encoding='cp1252')
+
+    sp = ['comp', 'rake', 'dist',
+          'diff', 'tfidf', 'cosine',
+          'muta', 'mnk', 'zbigrams_common_count',
+          'zunigrams_common_count', 'zbigrams_common_ratio', 'zunigrams_common_ratio']
+
+    ls = []
+    for i in sp:
+        for j in sp:
+            if i != j:
+                exec('frame["{0}/{1}"] = frame["{0}"]/frame["{1}"]'.format(i, j))
+                exec('frame["{0}*{1}"] = frame["{0}"]/frame["{1}"]'.format(i, j))
+                ls.append('{0}/{1}'.format(i, j))
+                ls.append('{0}*{1}'.format(i, j))
+                #print('frame["{0}/{1}"] = frame["{0}"]/frame["{1}"]'.format(i, j), end='\n')
+                #print('frame["{0}*{1}"] = frame["{0}"]*frame["{1}"]'.format(i, j), end='\n')
+
+        sp.remove(i)
+
+    frame = frame.replace([np.inf, -np.inf], np.nan)
+
+    # def nth_root(value, n_root):
+    #     root_value = 1 / float(n_root)
+    #     return round(Decimal(value) ** Decimal(root_value), 3)
+    #
+    # def text_to_vector(text):
+    #     try:
+    #         words = text.split(' ')
+    #     except AttributeError:
+    #         return Counter(''.split(' '))
+    #     return Counter(words)
+    #
+    # def my_mutalist(s):
+    #     x = text_to_vector(s['question1'])
+    #     y = text_to_vector(s['question2'])
+    #     vect = DictVectorizer(sparse=False).fit_transform([x,y])
+    #     sm = sum(abs(a - b) for a, b in vect.T)
+    #     if sm:
+    #         return 1/sm
+    #     else:
+    #         return 1
+    #
+    # def my_mutamnk(s):
+    #     x = text_to_vector(s['question1'])
+    #     y = text_to_vector(s['question2'])
+    #     vect = DictVectorizer(sparse=False).fit_transform([x, y])
+    #     mnk = nth_root(sum(pow(abs(a - b), 3) for a, b in vect.T), 3)
+    #     if mnk:
+    #         return 1/mnk
+    #     else:
+    #         return 1
+    #
+    # def get_cosine(s):
+    #     try:
+    #         vec1 = Counter(s['question1'].split(' '))
+    #         vec2 = Counter(s['question2'].split(' '))
+    #     except:
+    #         return 0.0
+    #     intersection = set(vec1.keys()) & set(vec2.keys())
+    #     numerator = sum([vec1[x] * vec2[x] for x in intersection])
+    #
+    #     sum1 = sum([vec1[x] ** 2 for x in vec1.keys()])
+    #     sum2 = sum([vec2[x] ** 2 for x in vec2.keys()])
+    #     denominator = sqrt(sum1) * sqrt(sum2)
+    #
+    #     if not denominator:
+    #         return 0.0
+    #     else:
+    #         return float(numerator) / denominator
+    #
+    # frame['cosine'] = frame[['question1', 'question2']].apply(get_cosine, axis=1)
+    # frame['muta'] = frame[['question1', 'question2']].apply(my_mutalist, axis=1)
+    # frame['mnk'] = frame[['question1', 'question2']].apply(my_mutamnk, axis=1)
+    # frame['mnk'] = frame['mnk'].astype('float')
+    #
+    # E.saver(frame, 'all_and_my_mutalist.csv')
+
+
 
     # from ngram import NGram
     # import pylev
@@ -214,11 +296,20 @@ def go():
     print('                  Comp:', roc_auc_score(frame['is_duplicate'], frame['comp'].fillna(0)))
     print('                  Diff:', roc_auc_score(frame['is_duplicate'], frame['diff'].fillna(0)))
 
+    print('                Cosine:', roc_auc_score(frame['is_duplicate'], frame['cosine'].fillna(0)))
+    print('                  Muta:', roc_auc_score(frame['is_duplicate'], frame['muta'].fillna(0)))
+    print('                   Mnk:', roc_auc_score(frame['is_duplicate'], frame['mnk'].fillna(0)))
 
     print('zunigrams_common_ratio:', roc_auc_score(frame['is_duplicate'], frame['zunigrams_common_ratio'].fillna(0)))
     print(' zbigrams_common_ratio:', roc_auc_score(frame['is_duplicate'], frame['zbigrams_common_ratio'].fillna(0)))
     print('zunigrams_common_count:', roc_auc_score(frame['is_duplicate'], frame['zunigrams_common_count'].fillna(0)))
     print(' zbigrams_common_count:', roc_auc_score(frame['is_duplicate'], frame['zbigrams_common_count'].fillna(0)))
+
+    for i in ls:
+        print(' %s:'%i, roc_auc_score(frame['is_duplicate'], frame[i].fillna(0)))
+
+    #E.saver(frame, 'add_extra_features.csv')
+
 
     # print('z_len1:', roc_auc_score(frame['is_duplicate'], frame['z_len1'].fillna(0)))
     # print('z_len2:', roc_auc_score(frame['is_duplicate'], frame['z_len2'].fillna(0)))
@@ -238,6 +329,11 @@ def go():
     x_train['dist'] = frame['dist']
     x_train['comp'] = frame['comp']
     x_train['diff'] = frame['diff']
+    x_train['cosine'] = frame['cosine']
+    x_train['muta'] = frame['muta']
+    x_train['mnk'] = frame['mnk']
+
+    x_train[ls] = frame[ls]
 
     x_train['zunigrams_common_ratio'] = frame['zunigrams_common_ratio']
     x_train['zbigrams_common_ratio'] = frame['zbigrams_common_ratio']
@@ -284,15 +380,18 @@ def go():
                             'dist',
                             'diff',
                             'tfidf',
+                            'cosine',
+                            'muta',
+                            'mnk',
                             'zbigrams_common_count',
                             'zunigrams_common_count',
                             'zbigrams_common_ratio',
                             'zunigrams_common_ratio',
-                            'is_duplicate']], y_col='is_duplicate').trees(m_params={
+                            'is_duplicate']+ls], y_col='is_duplicate').trees(m_params={
         'verbose': True,
         'criterion': 'mse',
-        'n_estimators': 2500,
-        'learning_rate': 0.07
+        #'n_estimators': 2500,
+        #'learning_rate': 0.07
     },
         models=en.GradientBoostingClassifier))
 
