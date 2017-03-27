@@ -193,14 +193,13 @@ class Learning:
     def root_mse_score(predictions, targets):
         return sqrt(((predictions - targets) ** 2).mean())
 
-    def trees(self, m_params, models, cross=True):
+    def trees(self, m_params, models, cross=True, jobs=1):
         frame_l = self.data_frame.fillna(self.data_frame.mean())
         reg = models(**m_params)
-        #print(frame_l[self.slice].values)
 
         if cross:
             results = -cross_val_score(reg, frame_l.drop([self.slice], axis=1),
-                                      frame_l[self.slice], cv=6, n_jobs=3,
+                                      frame_l[self.slice], cv=6, n_jobs=jobs,
                                       scoring='neg_log_loss',
                                       #fit_params={'verbose': True},
                                             )
